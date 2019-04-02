@@ -2,8 +2,14 @@ Please use this repository to maintain your work for the team project.
 
 Also please fill the following details:
 
-- Team name:
+- Team name: AirSupervisors
 - Students (SCS username - Name):
+beir2061 - Buta Elisabeta Liana
+biir2060 - Burlacu Ioana-Simona
+bfir2051 - Boros Florin-Otniel
+gbir2109 - Gheorghe Bogdan
+cgir2072 - Chis George
+cbir2073 - Chise Bogdan
 
 Project idea:
 

@@ -12,6 +12,12 @@ cgir2072 - Chis George
 cbir2073 - Chise Bogdan
 
 Project idea:
+Air quality monitoring.
+
+Notify automatically when the configured threshold values are hit.
+Capture the current levels.
+Present historical data over time.
+Send notifications with the current values to the configured recipients.
 
 =============
 

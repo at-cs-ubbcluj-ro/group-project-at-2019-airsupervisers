@@ -12,7 +12,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        WebSocketConnection webSocketConnection = new WebSocketConnection("http://192.168.0.100:3000");
+        WebSocketConnection webSocketConnection = new WebSocketConnection("http://192.168.100.4:3000");
         webSocketConnection.start();
     }
 }

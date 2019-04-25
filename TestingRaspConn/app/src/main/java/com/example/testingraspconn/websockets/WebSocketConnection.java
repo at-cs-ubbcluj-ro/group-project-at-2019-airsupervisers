@@ -22,12 +22,16 @@ public class WebSocketConnection {
         this.url = url;
     }
 
+    private WebSocket ws;
     public void start(){
 
         Request request = new Request.Builder().url(url).build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         client = new OkHttpClient();
-        WebSocket ws = client.newWebSocket(request, listener);
+        ws = client.newWebSocket(request, listener);
+    }
+    public void send(String msg){
+        ws.send(msg);
     }
 
     private final class EchoWebSocketListener extends WebSocketListener {

@@ -2,8 +2,14 @@ package com.example.testingraspconn;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 
 import com.example.testingraspconn.websockets.WebSocketConnection;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
+import java.io.IOException;
 
 /**
  * Skeleton of an Android Things activity.
@@ -26,12 +32,69 @@ import com.example.testingraspconn.websockets.WebSocketConnection;
  */
 public class MainActivity extends Activity {
 
+    private MCP3008 mMCP3008;
+    private Handler mHandler;
+    private DetectionService detectionService;
+    private WebSocketConnection webSocketConnection;
+    private final String url = "http://192.168.100.4:3000";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
 
-        WebSocketConnection webSocketConnection = new WebSocketConnection("http://192.168.0.100:3000");
+        webSocketConnection = new WebSocketConnection(url);
         webSocketConnection.start();
+
+        detectionService = new DetectionService();
+
+        try {
+            mMCP3008 = new MCP3008("BCM25", "BCM18", "BCM24", "BCM23");
+            mMCP3008.register();
+        } catch( IOException e ) {
+            Log.e("MCP3008", "MCP initialization exception occurred: " + e.getMessage());
+        }
+
+        mHandler = new Handler();
+        mHandler.post(mReadAdcRunnable);
+    }
+
+    private Runnable mReadAdcRunnable = new Runnable() {
+
+        private static final long DELAY_MS = 3000L; // 3 seconds
+
+        @Override
+        public void run() {
+            if (mMCP3008 == null) {
+                return;
+            }
+            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            try {
+                int sensorValue = mMCP3008.readAdc(0x0);
+
+                DetectedGas detectedGas = detectionService.ConvertPPM(sensorValue);
+                String json = ow.writeValueAsString(detectedGas);
+                webSocketConnection.send(json);
+
+                Log.e("MCP3008", "ADC 0 Default: " + sensorValue);
+            } catch( IOException e ) {
+                Log.e("MCP3008", "Something went wrong while reading from the ADC: " + e.getMessage());
+            }
+
+            mHandler.postDelayed(this, DELAY_MS);
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if( mMCP3008 != null ) {
+            mMCP3008.unregister();
+        }
+
+        if( mHandler != null ) {
+            mHandler.removeCallbacks(mReadAdcRunnable);
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.example.testingconnectionlowerapi.websockets;//package com.example.t
 
 import android.content.Context;
 
+import com.example.testingconnectionlowerapi.domain.DetectedGas;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -38,16 +39,20 @@ public class WebSocketConnection {
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
             System.out.println("has opened");
-            webSocket.send("test");
+//            webSocket.send("test");
         }
 
         @Override
         public void onMessage(WebSocket webSocket, String response) {
             System.out.println("Received message " + response);
             try {
+
                 JSONObject jsonObject = new JSONObject(response);
                 Gson gson=new GsonBuilder().create();
-                MessageObject message = gson.fromJson(jsonObject.toString(), MessageObject.class);
+                DetectedGas detectedGas = gson.fromJson(jsonObject.toString(), DetectedGas.class);
+
+                System.out.println("Received detected gas obj" + detectedGas);
+
             } catch (JSONException e) {
                 e.printStackTrace();
             }

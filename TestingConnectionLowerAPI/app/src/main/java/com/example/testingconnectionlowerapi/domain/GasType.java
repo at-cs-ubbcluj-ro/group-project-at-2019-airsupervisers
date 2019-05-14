@@ -1,4 +1,4 @@
-package com.example.testingraspconn;
+package com.example.testingconnectionlowerapi.domain;
 
 import java.io.Serializable;
 

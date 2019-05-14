@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 
 import com.example.testingconnectionlowerapi.domain.History;
 import com.example.testingconnectionlowerapi.viewmodel.HistoryViewModel;
+import com.example.testingconnectionlowerapi.websockets.WebSocketConnection;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
@@ -195,8 +196,8 @@ public class MainActivity extends AppCompatActivity {
 
 //        insertDummyHistories();
 
-//        WebSocketConnection webSocketConnection = new WebSocketConnection("http://192.168.100.4:3000");
-//        webSocketConnection.start();
+        WebSocketConnection webSocketConnection = new WebSocketConnection("http://172.30.114.246:3000");
+        webSocketConnection.start();
     }
 
     private LineData generateDataLine(int cnt) {

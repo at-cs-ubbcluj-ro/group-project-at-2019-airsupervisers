@@ -8,6 +8,11 @@ import android.util.Log;
 import com.example.testingraspconn.websockets.WebSocketConnection;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -36,7 +41,7 @@ public class MainActivity extends Activity {
     private Handler mHandler;
     private DetectionService detectionService;
     private WebSocketConnection webSocketConnection;
-    private final String url = "http://192.168.100.4:3000";
+    private final String url = "http://172.30.114.246:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +78,8 @@ public class MainActivity extends Activity {
                 int sensorValue = mMCP3008.readAdc(0x0);
 
                 DetectedGas detectedGas = detectionService.ConvertPPM(sensorValue);
-                String json = ow.writeValueAsString(detectedGas);
+                Gson gson = new Gson();
+                String json = gson.toJson(detectedGas);//  ow.writeValueAsString(detectedGas);
                 webSocketConnection.send(json);
 
                 Log.e("MCP3008", "ADC 0 Default: " + sensorValue);

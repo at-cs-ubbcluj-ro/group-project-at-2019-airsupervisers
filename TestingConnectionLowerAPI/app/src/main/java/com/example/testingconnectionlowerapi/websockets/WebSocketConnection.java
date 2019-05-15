@@ -2,6 +2,7 @@ package com.example.testingconnectionlowerapi.websockets;//package com.example.t
 
 import android.content.Context;
 
+import com.example.testingconnectionlowerapi.MainActivity;
 import com.example.testingconnectionlowerapi.domain.DetectedGas;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,12 +26,15 @@ public class WebSocketConnection {
         this.url = url;
     }
 
-    public void start(){
+    public void start(Context context){
 
         Request request = new Request.Builder().url(url).build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         client = new OkHttpClient();
         WebSocket ws = client.newWebSocket(request, listener);
+
+
+        ((MainActivity) context).updateUI();
     }
 
     private final class EchoWebSocketListener extends WebSocketListener {

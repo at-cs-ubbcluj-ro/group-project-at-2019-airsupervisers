@@ -197,7 +197,11 @@ public class MainActivity extends AppCompatActivity {
 //        insertDummyHistories();
 
         WebSocketConnection webSocketConnection = new WebSocketConnection("http://172.30.114.246:3000");
-        webSocketConnection.start();
+        webSocketConnection.start(this);
+    }
+
+    public void updateUI(){
+        System.out.println("Updated");
     }
 
     private LineData generateDataLine(int cnt) {

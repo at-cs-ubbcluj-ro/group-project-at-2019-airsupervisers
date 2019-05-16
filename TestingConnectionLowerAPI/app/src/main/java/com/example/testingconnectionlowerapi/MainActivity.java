@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 
 import com.example.testingconnectionlowerapi.domain.DetectedGas;
 import com.example.testingconnectionlowerapi.domain.History;
+import com.example.testingconnectionlowerapi.repository.HistoryRepository;
 import com.example.testingconnectionlowerapi.viewmodel.HistoryViewModel;
 import com.example.testingconnectionlowerapi.websockets.WebSocketConnection;
 import com.github.mikephil.charting.charts.BarChart;
@@ -34,6 +35,7 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -41,6 +43,9 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
+
+    ArrayList<LineData> list = null;
+    ListView lv = null;
 
     private class ChartDataAdapter extends ArrayAdapter<LineData> {
 
@@ -176,8 +181,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         YAxis leftAxis = liveChart.getAxisLeft();
-        leftAxis.setAxisMaximum(75f);
-        leftAxis.setAxisMinimum(0f);
+        leftAxis.setAxisMaximum(1700f);
+        leftAxis.setAxisMinimum(-5f);
         leftAxis.setDrawGridLines(true);
 
         YAxis rightAxis = liveChart.getAxisRight();
@@ -187,21 +192,15 @@ public class MainActivity extends AppCompatActivity {
 
         //feedMultiple();
 
-        ListView lv = findViewById(R.id.history_list);
+        lv = findViewById(R.id.history_list);
 
-        ArrayList<LineData> list = new ArrayList<>();
+        list = new ArrayList<>();
 
-        // 20 items
-        for (int i = 0; i < 20; i++) {
-            list.add(generateDataLine());
-        }
-
-        ChartDataAdapter cda = new ChartDataAdapter(getApplicationContext(), list);
-        lv.setAdapter(cda);
+       generateDataLine();
 
 //        insertDummyHistories();
 
-        WebSocketConnection webSocketConnection = new WebSocketConnection("http://172.30.114.246:3000", this);
+        WebSocketConnection webSocketConnection = new WebSocketConnection("http://172.30.118.103:3000", this);
         webSocketConnection.start();
     }
 
@@ -209,31 +208,62 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("Updated" + detectedGas);
         addEntry(detectedGas);
 
+
     }
 
     private LineData generateDataLine() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
 
         ArrayList<Entry> values1 = new ArrayList<>();
         ArrayList<Entry> values2 = new ArrayList<>();
         ArrayList<Entry> values3 = new ArrayList<>();
         ArrayList<Entry> values4 = new ArrayList<>();
 
-        for (int i = 0; i < 12; i++) {
-            values1.add(new Entry(i, (int) (Math.random() * 40) + 20 ));
-            values2.add(new Entry(i, values1.get(i).getY() - 5));
-            values3.add(new Entry(i, values2.get(i).getY() - 5));
-            values4.add(new Entry(i, values3.get(i).getY() - 5));
+        HistoryRepository historyRepository = HistoryRepository.getInstance();
+        List<History> listOfAllHistory =  historyRepository.getLocalHistory();
 
+        for(History history: listOfAllHistory){
+            if(history.getTypeOfGas().equals("Acetone")){
+                values1.add(new Entry(values1.size()+1, history.getPpm()));
+            }
+            else if(history.getTypeOfGas().equals("CleanAir")){
+                values2.add(new Entry(values2.size()+1, history.getPpm()));
+            }
+            else if(history.getTypeOfGas().equals("Methane")){
+                values3.add(new Entry(values3.size()+1, history.getPpm()));
+            }
+            else if(history.getTypeOfGas().equals("CO2")){
+                values4.add(new Entry(values4.size()+1, history.getPpm()));
+            }
         }
+
+//        for (int i = 0; i < 12; i++) {
+//            values1.add(new Entry(i, (int) (Math.random() * 40) + 20 ));
+//            values2.add(new Entry(i, values1.get(i).getY() - 5));
+//            values3.add(new Entry(i, values2.get(i).getY() - 5));
+//            values4.add(new Entry(i, values3.get(i).getY() - 5));
+//
+//        }
 
         LineData data = new LineData();
 
         data.addDataSet(createSet(values1,"Acetone", Color.BLUE));
-        data.addDataSet(createSet(values2,"Clean Air", Color.GRAY));
+        data.addDataSet(createSet(values2,"CleanAir", Color.GRAY));
         data.addDataSet(createSet(values3,"Methane", Color.RED));
         data.addDataSet(createSet(values4,"CO2", Color.GREEN));
 
-        return data;
+        list.add(data);
+
+                ChartDataAdapter cda = new ChartDataAdapter(getApplicationContext(), list);
+                lv.setAdapter(cda);
+
+            }
+
+        }).start();
+        return null;
     }
 
     private LineDataSet createSet(List<Entry> initialValues, String label, int color) {
@@ -273,6 +303,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void addEntry(DetectedGas detectedGas) {
         LineData data = liveChart.getData();
+
+        HistoryRepository historyRepository = HistoryRepository.getInstance();
+        historyRepository.insertHistoriesAsync(Arrays.asList(new History(detectedGas.getGasType().name(), detectedGas.getPpm())));
+
+
         if (data != null) {
             // set.addEntry(...); // can be called as well
             float now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - midnightTimestamp);

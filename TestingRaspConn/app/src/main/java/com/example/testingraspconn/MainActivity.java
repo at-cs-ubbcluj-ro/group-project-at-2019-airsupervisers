@@ -41,7 +41,7 @@ public class MainActivity extends Activity {
     private Handler mHandler;
     private DetectionService detectionService;
     private WebSocketConnection webSocketConnection;
-    private final String url = "http://172.30.114.246:3000";
+    private final String url = "http://172.30.118.103:3000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="./pageStyle.css" > 
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    </head>
+    <body>
+        <div class="wrapper">
+            <!-- Sidebar -->
+            <nav id="sidebar">
+                <div class="sidebar-header">
+                    <h2>Android Things</h2>
+                    <h3>Team Project</h3>
+                    <h3>AirSupervisors</h3>
+                </div>
+                <ul id="linkList" class="list-unstyled components">
+                    <li class="active">
+                        <a href="#overview">Overview</a>
+                    </li>
+                    <li>
+                        <a href="#prerequisites">Pre-requisites</a>
+                    </li>
+                    <li>
+                        <a href="#schematics">Schematics</a>
+                    </li>
+                    <li>
+                        <a href="#explanations">Explanations</a>
+                    </li>
+                    <li>
+                        <a href="#code">Code</a>
+                    </li>
+                    <li>
+                        <a href="#running">Set up and running</a>
+                    </li>
+                </ul>
+            </nav>
+
+    
+            <div class="content" id="content" >
+                <div id="overview">
+                    <p>
+                        <h2>Overview</h2>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;The following project's purpose is to measure the air quality, based on the quantity of various types of gas detected in the air. The captured data is sent to an Android app client which will display a line-chart with the current levels and also store some historical data sent over time.</div>
+
+                    </p>
+                </div>
+                <div id="prerequisites"> 
+                    <p>
+                        <h2>Pre-requisites</h2>
+                        <div>
+                            What you will need:
+                            <li>Android Studio 2.2+</li>
+                            <li>Raspberry Pi 3 Model B</li>
+                            <li>1 breadboard</li>
+                            <li>jumper wires</li>
+                            <li>MQ-135 gas sensor</li>
+                            <li>MCP3008 ADC (Analog to digital converter)</li>
+                            <li>an USB cable </li>
+                            <li>an Ethernet cable </li>
+                        </div>
+                        <br/>
+                    </p>
+                </div>
+                    
+                <div id="explanations"> 
+                    <p>
+                        <h2>Explanations</h2>
+                        <div>
+                            &nbsp;&nbsp;&nbsp;&nbsp;In order to measure the air quality we need a gas sensor.
+                            <br/>&nbsp;&nbsp;&nbsp;&nbsp;We used the MQ-135 model which is suitable for detection of NH3, NOx, alcohol, benzene, smoke, CO2 etc.
+                            <br/>&nbsp;&nbsp;&nbsp;&nbsp;The sensitive material of MQ-135 gas sensor is SnO2,which with lower conductivity in clean air.
+                            When the target gas exists, the sensor’s conductivity gets higher along with the gas concentration rising.<br/>
+                            The concentration of a gas is given in PPM (parts per million).
+                            One difficulty of the MQ-135 is that a single analog value is given with which the gas content in the air has to be calculated for the supported gases.
+                            <br/> &nbsp;&nbsp;&nbsp;&nbsp;But Raspberry Pi's GPIO pins are digital pins. So how can we process the input from MQ-135 gas sensor?
+                            <br/> &nbsp;&nbsp;&nbsp;&nbsp;Here comes MCP3008 which is an ADC (Analog to digital converter).
+                            MCP3008 is a 10bit 8-channel ADC which uses the SPI bus protocol and allows you to get the analog inputs with Raspberry Pi. It gives you 8 analog inputs and it uses just four pins of Raspberry Pi excluding the power and ground pins.
+                            <br/>&nbsp;&nbsp;&nbsp;&nbsp;MCP3008 is a 10 bit ADC so it will give us output up to (2 to the power of 10) = 1023. So the output will be a range from 0-1023 where 0 means 0V and 1023 means 3.3V
+                            <br/>&nbsp;&nbsp;&nbsp;&nbsp;MCP3008 ADC has a total of 16 pins out of which 8 pins are for taking the analog input. <br/>&nbsp;&nbsp;&nbsp;&nbsp;The analog input pins are from CH0-CH7 (Pins 1-8). On the other side, we have different pins which are as follows
+
+                            <li>DGND is digital ground pin for the chip.</li>
+                            <li>CS is the chip select pin.</li>
+                            <li>MOSI is the data input pin from the Raspberry Pi.</li>
+                            <li>MISO is the data output pin.</li>
+                            <li>CLK is the clock pin.</li>
+                            <li>AGND is the analog ground pin.</li>
+                            <li>VREF is the analog reference voltage. Connect to 3.3V. You can change it if you want to change the scale.</li>
+                            <li>VDD is the power pin for the chip.</li>
+                            However ,we will need just four of them: CS,CLK,MISO,MOSI.
+                            <br/>
+                            <br/>
+
+                        </div>
+                        <br/>
+                    </p>
+                </div>
+                <div id="schematics"> 
+                    <p>
+                        <h2>Schematics</h2>
+                        <div>
+                            <img src="./schema.jpg" id="ultrasonicImg" width="100%"/>
+                            
+                            <div id="ultrasonicModel" class="modal">
+                                <span class="close">&times;</span>
+                                <img class="modal-content" id="ultrasonicContent">
+                            </div>
+                        </div>
+                        <br/>
+                    </p>
+                           
+                </div>
+                    <div id="code"> 
+                        <p>
+                            <h2>Code</h2>
+                            <div>
+                                &nbsp;&nbsp;&nbsp;&nbsp;This project consists of 3 components:
+                                <li>an Android IOT project using RaspberryPi</li>
+                                <li>a websocket server</li>
+                                <li>an Android app which is the client</li>
+
+
+                                &nbsp;&nbsp;&nbsp;&nbsp;Let's take a look inside the Android IOT project which is the main component.
+                                <br/>&nbsp;&nbsp;&nbsp;&nbsp;The types of gas we want to detect are: Methane, CO2, Acetone.
+                                <br/>&nbsp;&nbsp;&nbsp;&nbsp;We need to interpret the ppm values from the ADC and set some thresholds for each type of gas.
+                                <img src="./code1.png" width="100%"/>
+                                <li>&nbsp;&nbsp;&nbsp;&nbsp;In the MCP3008 class, we declare the GPIO pin names that we will use and the GPIO objects and register them using PeripheralManager class. To access any of the PeripheralManager APIs, you need to add the USE_PERIPHERAL_IO permission to your app's manifest file.</li>
+
+                                <li>&nbsp;&nbsp;&nbsp;&nbsp;Now, in the MainActivity we need to setup the GPIO pins for the MCP3008 and create a connection to the websocket server. </li>
+                                <img src="./code2.png" width="100%"/>
+                                <li>&nbsp;&nbsp;&nbsp;&nbsp;In order to get notifications about the current levels of gases in air we will use a Runnable object which will sent data through the websocket connection every 3 seconds.</li>
+                                <img src="./code3.png" width="100%"/>
+                                <li>&nbsp;&nbsp;&nbsp;&nbsp;The data about the air quality is sent as a json object containing the type of gas, the ppm value and the date.</li>
+                                <img src="./code4.png" width="100%"/>
+                                <li>&nbsp;&nbsp;&nbsp;&nbsp;Now, we need the android client to listen on the websocket connection and display the sent data.</li>
+                                <img src="./code5.png" width="100%"/>
+                                <li>&nbsp;&nbsp;&nbsp;&nbsp;And also to update the ui and implicitly the live chart with the new values.</li>
+                                <img src="./code6.png" width="100%"/>
+                                <img src="./code7.png" width="100%"/>
+
+
+
+
+                            </div>
+                            <br/>
+                        </p>
+                </div>
+                <div id="running"> 
+                    <p>
+                        <h2>Set up and running</h2>
+                        <div>
+                            &nbsp;&nbsp;&nbsp;&nbsp;To get all of this running:
+                                <li>Connect your Raspberry to the laptop via an USB cable. This will charge the Raspberry.</li>
+                                <li>Connect your Raspberry with an ethernet cable to the router. Check what IP the Raspberry received.</li>
+                                <li>In a command line, enter adb connect raspberry_ip.</li>
+
+                                <li>Run the websocket server</li>
+                                <li>Run the Android IOT project and choose the Raspberry device.</li>
+                                <li>Run the Android app client</li>
+                        </div>
+                        <br/>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <!-- Popper.JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+        <!-- Bootstrap JS -->
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+        <!-- jQuery Custom Scroller CDN -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
+        <script src="script.js"></script>
+        <script>
+            var modal1 = document.getElementById('ultrasonicModel');
+            var img1 = document.getElementById('ultrasonicImg');
+            var modalImg1 = document.getElementById("ultrasonicContent");
+            img1.onclick = function(){
+                modal1.style.display = "block";
+                modalImg1.src = this.src;
+            }
+
+            var modal2 = document.getElementById('ultrasonicLedModel');
+            var img2 = document.getElementById('ultrasonicLedImg');
+            var modalImg2 = document.getElementById("ultrasonicLedContent");
+            img2.onclick = function(){
+                modal2.style.display = "block";
+                modalImg2.src = this.src;
+            }
+
+            var spans = document.getElementsByClassName("close");
+            for(i=0;i<spans.length;i++)
+            {
+                var span=spans[i];
+                span.onclick = function() { 
+                modal1.style.display = "none";
+                modal2.style.display = "none";}
+            }         
+        </script>
+    </body>
+</html>

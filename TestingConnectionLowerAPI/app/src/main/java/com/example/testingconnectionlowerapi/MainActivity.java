@@ -15,6 +15,7 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 
+import com.example.testingconnectionlowerapi.domain.DetectedGas;
 import com.example.testingconnectionlowerapi.domain.History;
 import com.example.testingconnectionlowerapi.viewmodel.HistoryViewModel;
 import com.example.testingconnectionlowerapi.websockets.WebSocketConnection;
@@ -73,27 +74,31 @@ public class MainActivity extends AppCompatActivity {
             if (data != null) {
                 data.setValueTextColor(Color.BLACK);
             }
-            holder.chart.getDescription().setEnabled(false);
-            holder.chart.setDrawGridBackground(false);
+            holder.chart.getDescription().setEnabled(true);
+            holder.chart.getDescription().setText("History");
+            holder.chart.setDrawGridBackground(true);
+            holder.chart.getLegend().setEnabled(false);
 
             XAxis xAxis = holder.chart.getXAxis();
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setDrawGridLines(false);
+            xAxis.setPosition(XAxis.XAxisPosition.TOP);
+            xAxis.setAvoidFirstLastClipping(true);
+            xAxis.setDrawAxisLine(false);
+            xAxis.setDrawGridLines(true);
 
             YAxis leftAxis = holder.chart.getAxisLeft();
-            leftAxis.setLabelCount(5, false);
-            leftAxis.setSpaceTop(15f);
+            leftAxis.setAxisMaximum(75f);
+            leftAxis.setAxisMinimum(0f);
+            leftAxis.setDrawGridLines(true);
 
             YAxis rightAxis = holder.chart.getAxisRight();
-            rightAxis.setLabelCount(5, false);
-            rightAxis.setSpaceTop(15f);
+            rightAxis.setEnabled(false);
 
             // set data
             holder.chart.setData(data);
 
             // do not forget to refresh the chart
 //            holder.chart.invalidate();
-            holder.chart.animateX(700);
+            holder.chart.animateX(500);
 
             return convertView;
         }
@@ -140,8 +145,8 @@ public class MainActivity extends AppCompatActivity {
 
         data.addDataSet(createSet(null,"Acetone", Color.BLUE));
         data.addDataSet(createSet(null,"Clean Air", Color.GRAY));
-        data.addDataSet(createSet(null,"Alcohol", Color.RED));
-        data.addDataSet(createSet(null,"Gas", Color.GREEN));
+        data.addDataSet(createSet(null,"Methane", Color.RED));
+        data.addDataSet(createSet(null,"CO2", Color.GREEN));
 
         // add empty data
         liveChart.setData(data);
@@ -171,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         YAxis leftAxis = liveChart.getAxisLeft();
-        leftAxis.setAxisMaximum(20f);
+        leftAxis.setAxisMaximum(75f);
         leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(true);
 
@@ -180,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
         liveChart.setDrawBorders(false);
 
-        feedMultiple();
+        //feedMultiple();
 
         ListView lv = findViewById(R.id.history_list);
 
@@ -188,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 20 items
         for (int i = 0; i < 20; i++) {
-            list.add(generateDataLine(i + 1));
+            list.add(generateDataLine());
         }
 
         ChartDataAdapter cda = new ChartDataAdapter(getApplicationContext(), list);
@@ -196,93 +201,95 @@ public class MainActivity extends AppCompatActivity {
 
 //        insertDummyHistories();
 
-        WebSocketConnection webSocketConnection = new WebSocketConnection("http://172.30.114.246:3000");
-        webSocketConnection.start(this);
+        WebSocketConnection webSocketConnection = new WebSocketConnection("http://172.30.114.246:3000", this);
+        webSocketConnection.start();
     }
 
-    public void updateUI(){
-        System.out.println("Updated");
+    public void updateUI(DetectedGas detectedGas){
+        System.out.println("Updated" + detectedGas);
+        addEntry(detectedGas);
+
     }
 
-    private LineData generateDataLine(int cnt) {
+    private LineData generateDataLine() {
 
         ArrayList<Entry> values1 = new ArrayList<>();
-
-        for (int i = 0; i < 12; i++) {
-            values1.add(new Entry(i, (int) (Math.random() * 65) + 40));
-        }
-
-        LineDataSet d1 = new LineDataSet(values1, "New DataSet " + cnt + ", (1)");
-        d1.setLineWidth(2.5f);
-        d1.setCircleRadius(4.5f);
-        d1.setHighLightColor(Color.rgb(244, 117, 117));
-        d1.setDrawValues(false);
-
         ArrayList<Entry> values2 = new ArrayList<>();
+        ArrayList<Entry> values3 = new ArrayList<>();
+        ArrayList<Entry> values4 = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
-            values2.add(new Entry(i, values1.get(i).getY() - 30));
+            values1.add(new Entry(i, (int) (Math.random() * 40) + 20 ));
+            values2.add(new Entry(i, values1.get(i).getY() - 5));
+            values3.add(new Entry(i, values2.get(i).getY() - 5));
+            values4.add(new Entry(i, values3.get(i).getY() - 5));
+
         }
 
-        LineDataSet d2 = new LineDataSet(values2, "New DataSet " + cnt + ", (2)");
-        d2.setLineWidth(2.5f);
-        d2.setCircleRadius(4.5f);
-        d2.setHighLightColor(Color.rgb(244, 117, 117));
-        d2.setColor(ColorTemplate.VORDIPLOM_COLORS[0]);
-        d2.setCircleColor(ColorTemplate.VORDIPLOM_COLORS[0]);
-        d2.setDrawValues(false);
+        LineData data = new LineData();
 
-        ArrayList<ILineDataSet> sets = new ArrayList<>();
-        sets.add(d1);
-        sets.add(d2);
+        data.addDataSet(createSet(values1,"Acetone", Color.BLUE));
+        data.addDataSet(createSet(values2,"Clean Air", Color.GRAY));
+        data.addDataSet(createSet(values3,"Methane", Color.RED));
+        data.addDataSet(createSet(values4,"CO2", Color.GREEN));
 
-        return new LineData(sets);
+        return data;
     }
 
     private LineDataSet createSet(List<Entry> initialValues, String label, int color) {
 
         LineDataSet set = new LineDataSet(initialValues, label);
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
-        set.setLineWidth(3f);
+        set.setLineWidth(2.5f);
+        set.setCircleRadius(4.5f);
+        set.setHighLightColor(color);
         set.setColor(color);
-        set.setHighlightEnabled(true);
+        set.setCircleColor(color);
         set.setDrawValues(true);
         set.setDrawCircles(true);
-        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        set.setCubicIntensity(0.2f);
         return set;
     }
 
-    private void feedMultiple() {
+//    private void feedMultiple() {
+//
+//        if (thread != null){
+//            thread.interrupt();
+//        }
+//
+//        thread = new Thread(() -> {
+//            while (true){
+//                addEntry();
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    // TODO Auto-generated catch block
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//
+//        thread.start();
+//    }
 
-        if (thread != null){
-            thread.interrupt();
-        }
-
-        thread = new Thread(() -> {
-            while (true){
-                addEntry();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        thread.start();
-    }
-
-    private void addEntry() {
+    private void addEntry(DetectedGas detectedGas) {
         LineData data = liveChart.getData();
         if (data != null) {
             // set.addEntry(...); // can be called as well
             float now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - midnightTimestamp);
-            data.addEntry(new Entry(now, (float) Math.random() * 15), 0);
-            data.addEntry(new Entry(now, (float) Math.random() * 15), 1);
-            data.addEntry(new Entry(now, (float) Math.random() * 15), 2);
-            data.addEntry(new Entry(now, (float) Math.random() * 15), 3);
+            switch (detectedGas.getGasType()) {
+                case Methane:
+                    data.addEntry(new Entry(now, (float) detectedGas.getPpm()), 2);
+                    break;
+                case CO2:
+                    data.addEntry(new Entry(now, (float) detectedGas.getPpm()), 3);
+                    break;
+                case Acetone:
+                    data.addEntry(new Entry(now, (float) detectedGas.getPpm()), 0);
+                    break;
+                case CleanAir:
+                    data.addEntry(new Entry(now, (float) detectedGas.getPpm()), 1);
+                    break;
+            }
 
             data.notifyDataChanged();
 
@@ -296,8 +303,6 @@ public class MainActivity extends AppCompatActivity {
             // move to the latest entry
             liveChart.moveViewToX(now);
         }
-
-
     }
 
 

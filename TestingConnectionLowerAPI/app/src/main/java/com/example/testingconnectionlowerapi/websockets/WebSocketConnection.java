@@ -21,20 +21,20 @@ public class WebSocketConnection {
 
     private OkHttpClient client;
     private String url;
+    private Context context;
 
-    public WebSocketConnection(String url) {
+    public WebSocketConnection(String url, Context context) {
         this.url = url;
+        this.context = context;
+
     }
 
-    public void start(Context context){
+    public void start(){
 
         Request request = new Request.Builder().url(url).build();
         EchoWebSocketListener listener = new EchoWebSocketListener();
         client = new OkHttpClient();
         WebSocket ws = client.newWebSocket(request, listener);
-
-
-        ((MainActivity) context).updateUI();
     }
 
     private final class EchoWebSocketListener extends WebSocketListener {
@@ -56,6 +56,7 @@ public class WebSocketConnection {
                 DetectedGas detectedGas = gson.fromJson(jsonObject.toString(), DetectedGas.class);
 
                 System.out.println("Received detected gas obj" + detectedGas);
+                ((MainActivity) context).updateUI(detectedGas);
 
             } catch (JSONException e) {
                 e.printStackTrace();
